@@ -6,6 +6,9 @@
 
 package ch_1;
 
+import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
+
 import java.util.Iterator;
 
 public class ResizingArrayStack<Item> implements Iterable<Item> {
@@ -53,5 +56,19 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
         public Item next() {
             return a[--i];
         }
+    }
+
+    public static void main(String[] args){
+        ResizingArrayStack <String> s = new ResizingArrayStack<>();
+        while(!StdIn.isEmpty()){
+            String item = StdIn.readString();
+            if(!item.equals("-")){
+                s.push(item);
+            }
+            else if(!s.isEmpty()){
+                StdOut.print(s.pop() + " ");
+            }
+        }
+        StdOut.println("(" + s.size() + "left on the stack )");
     }
 }
