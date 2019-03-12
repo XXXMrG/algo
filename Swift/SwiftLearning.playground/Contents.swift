@@ -340,4 +340,103 @@ print(6.simpleDescription)
 
 // 错误处理
 
+enum PrinterError: Error {
+    case outOfPaper
+    case noToner
+    case onFire
+}
 
+print(PrinterError.outOfPaper)
+
+func send(job: Int, toPrinter printerName: String) throws -> String {
+    if printerName == "Never Has Toner" {
+        throw PrinterError.noToner
+    }
+    return "Job sent"
+}
+
+do {
+    let printerResponse = try send(job: 1040, toPrinter: "Never Has Toner")
+    print(printerResponse)
+} catch {
+    print(error)
+}
+
+
+do {
+    let printerResponse = try send(job: 1440, toPrinter: "Gutenberg")
+    throw PrinterError.noToner
+    print(printerResponse)
+} catch PrinterError.onFire {
+    // error.type == onFire goto there
+    print("I'll just put this over here, with the rest of the fire.")
+} catch let printerError as PrinterError {
+    // other error type goto there
+    print("Printer error: \(printerError).")
+} catch {
+    // error type not in printererror goto there
+    print(error)
+}
+
+let printerSuccess = try? send(job: 1884, toPrinter: "Mergenthaler")
+// 使用可选类型来捕捉错误，发生错误时可选类型的值为 nil
+let printerFailure = try? send(job: 1885, toPrinter: "Never Has Toner")
+
+
+// 使用 defer 来写在函数返回后也会被执行的代码块，无论是否错误被抛出。
+// 你甚至可以在没有错误处理的时候使用 defer ，来简化需要在多处地方返回的函数。
+var fridgeIsOpen = false
+let fridgeContent = ["milk", "eggs", "leftovers"]
+
+func fridgeContains(_ food: String) -> Bool {
+    fridgeIsOpen = true
+    defer {
+        fridgeIsOpen = false
+    }
+    
+    let result = fridgeContent.contains(food)
+    return result
+}
+fridgeContains("banana")
+print(fridgeIsOpen)
+
+//把名字写在尖括号里来创建一个泛型方法或者类型。
+
+func makeArray<Item>(repeating item: Item, numberOfTimes: Int) -> [Item] {
+    var result = [Item]()
+    for _ in 0..<numberOfTimes {
+        result.append(item)
+    }
+    return result
+}
+makeArray(repeating: 1, numberOfTimes:10)
+
+
+
+// Reimplement the Swift standard library's optional type
+enum OptionalValue<Wrapped> {
+    case none
+    case some(Wrapped)
+}
+var possibleInteger: OptionalValue<Int> = .none
+possibleInteger = .some(100)
+
+
+// 在类型名称后紧接 where来明确一系列需求——比如说，来要求类型实现一个协议，
+// 要求两个类型必须相同，或者要求类必须继承自特定的父类。
+func anyCommonElements<T: Sequence, U: Sequence>(_ lhs: T, _ rhs: U) -> T
+    where T.Iterator.Element: Equatable, T.Iterator.Element == U.Iterator.Element {
+        // 不能直接建立泛型数组，因为泛型本身是个数组，而如果直接使用泛型作为返回类型。
+        // 则会找不到泛型已有的方法
+        var result = [Any]()
+        for lhsItem in lhs {
+            for rhsItem in rhs {
+                if lhsItem == rhsItem {
+                    result.append(lhsItem)
+                    //return true
+                }
+            }
+        }
+        return result as! T
+}
+anyCommonElements([1, 2, 3], [2, 3])
