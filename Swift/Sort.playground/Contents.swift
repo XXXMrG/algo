@@ -1,9 +1,9 @@
 import UIKit
 
 
-
+// 选择，插入，希尔三大简单排序
 class Sort {
-    //
+    // 遵循 Comparable 使得泛型可以被比较
     func selectionSort<T: Comparable>(_ array: [T]) -> [T] {
         var a = array
         let N = a.count
@@ -16,6 +16,7 @@ class Sort {
                     count += 1
                 }
             }
+            // Array 库函数，交换两个元素
             a.swapAt(i, min)
         }
         print("selectionSort cost \(count)")
@@ -63,7 +64,7 @@ class Sort {
         return a
     }
 }
-
+// 归并排序
 class Merge<T: Comparable> {
     
     var aux = [T]()
@@ -72,7 +73,7 @@ class Merge<T: Comparable> {
         data = array
         self.mergeSort(&data, lo: 0, hi: data.count - 1)
     }
-    
+    // 使用 inout 来操作实际参数
     func merge(_ array: inout [T], _ lo: Int, _ mid: Int, _ hi: Int){
         var i = lo
         var j = mid + 1
@@ -187,18 +188,263 @@ class Merge<T: Comparable> {
         return merge(leftPile: leftArray, rightPile: rightArray)             // 5
     }
 }
+// 快速排序
+class Quick<T: Comparable> {
+    var data: [T]
+    
+    init(_ array: [T]) {
+        self.data = array
+        // 打乱一个数组 shuffle, shuffled
+        // https://developer.apple.com/documentation/swift/array/2994757-shuffled
+        data.shuffle()
+        //sort(&data, lo: 0, hi: data.count - 1)
+        //quick3Sort(&data, lo: 0, hi: data.count - 1)
+        data = quicksort(data)
+    }
+    // 最经典的切分方式，取第一个元素作为基准
+    func sort(_ array: inout [T], lo: Int, hi: Int) {
+        if hi <= lo {
+            return
+        }
+        let j = partition(&array, lo: lo, hi: hi)
+        sort(&array, lo: lo, hi: j - 1)
+        sort(&array, lo: j + 1, hi: hi)
+    }
+    // 手写 partition 实际上可以使用高级操作符 filter 来直接完成切分
+    func partition(_ array: inout [T], lo: Int, hi: Int) -> Int {
+        var i = lo
+        var j = hi + 1
+        let v = array[lo]
+        while true {
+            i += 1
+            while array[i] > v {
+                if i == hi {
+                    break
+                }
+                i += 1
+            }
+            j -= 1
+            while v > array[j] {
+                if j == lo {
+                    break
+                }
+                j -= 1
+            }
+            if i >= j {
+                break
+            }
+            array.swapAt(i, j)
+        }
+        array.swapAt(lo, j)
+        return j
+    }
+    
+    // 更简洁的写法
+    func quicksortHoare(_ a: inout [T], low: Int, high: Int) {
+        if low < high {
+            let p = partitionHoare(&a, low: low, high: high)
+            quicksortHoare(&a, low: low, high: p)
+            quicksortHoare(&a, low: p + 1, high: high)
+        }
+    }
+    
+    func partitionHoare(_ a: inout [T], low: Int, high: Int) -> Int {
+        let pivot = a[low]
+        var i = low - 1
+        var j = high + 1
+        
+        while true {
+            repeat { j -= 1 } while a[j] > pivot
+            repeat { i += 1 } while a[i] < pivot
+            
+            if i < j {
+                a.swapAt(i, j)
+            } else {
+                return j
+            }
+        }
+    }
 
-var number = [Int]()
-for _ in 0...100 {
-    number.append(Int(arc4random_uniform(100)))
+    // 三向切分
+    func quick3Sort(_ array: inout [T], lo: Int, hi: Int) {
+        if hi <= lo {
+            return
+        }
+        var lt = lo, i = lo + 1, gt = hi
+        let v = array[lo]
+        while i <= gt {
+            if array[i] < v {
+                array.swapAt(lt, i)
+                lt += 1
+                i += 1
+            }
+            else if v < array[i] {
+                array.swapAt(i, gt)
+                gt -= 1
+            }
+            else {
+                i += 1
+            }
+        }
+        quick3Sort(&array, lo: lo, hi: lt - 1)
+
+        quick3Sort(&array, lo: gt + 1, hi: hi)
+
+    }
+    // 三项切分，利用高级函数，效率并不太高
+    func quicksort<T: Comparable>(_ a: [T]) -> [T] {
+        guard a.count > 1 else { return a }
+        
+        //let pivot = a[a.count/2]
+        let pivot = a[0]
+        let less = a.filter { $0 < pivot }
+        let equal = a.filter { $0 == pivot }
+        let greater = a.filter { $0 > pivot }
+        
+        return quicksort(less) + equal + quicksort(greater)
+    }
+    // 三向切分，取最后一个元素作为基准
+    func partitionLomuto<T: Comparable>(_ a: inout [T], low: Int, high: Int) -> Int {
+        let pivot = a[high]
+        
+        var i = low
+        for j in low..<high {
+            if a[j] <= pivot {
+                (a[i], a[j]) = (a[j], a[i])
+                i += 1
+            }
+        }
+        (a[i], a[high]) = (a[high], a[i])
+        return i
+    }
+    
+    func quicksortLomuto<T: Comparable>(_ a: inout [T], low: Int, high: Int) {
+        if low < high {
+            let p = partitionLomuto(&a, low: low, high: high)
+            quicksortLomuto(&a, low: low, high: p - 1)
+            quicksortLomuto(&a, low: p + 1, high: high)
+        }
+    }
+    
 }
 
-var sort = Sort()
+// 堆和优先队列
+
+class Heap<T: Comparable> {
+    var data = [T]()
+    var N = 0
+    init(size: Int) {
+        data.reserveCapacity(size + 1)
+    }
+    
+    func insert(new: T) {
+        N += 1
+        data.append(new)
+        swim(N)
+    }
+    // 大元素上浮
+    func swim(_ k: Int) {
+        var k = k
+        while k > 1 && data[k/2] < data[k] {
+            // 大节点不断上浮
+            data.swapAt(k/2, k)
+            k = k / 2
+        }
+    }
+    
+    // 小元素下沉
+    func sink(_ k: Int) {
+        var k = k
+        while 2*k <= N {
+            var j = 2 * k
+            if j < N && data[j] < data[j+1] {
+                // 左节点是较小的节点,选择右节点作为新的根结点
+                j += 1
+            }
+            // 如果当前 k 号节点小于其父节点，下沉
+            guard data[k] < data[j] else { break }
+            data.swapAt(k, j)
+            k = j
+        }
+    }
+    
+    func delMax() -> T {
+        data.swapAt(1, N)
+        let max = data.remove(at: N)
+        N -= 1
+        sink(1)
+        return max
+    }
+}
+
+class heapSort {
+    
+    func sort(_ array: inout [Int]) {
+        var N = array.count
+        for k in stride(from: N/2, through: 1, by: -1) {
+            sink(&array, k, N)
+        }
+        
+        while N > 1 {
+            array.swapAt(1, N)
+            N -= 1
+            sink(&array, 1, N)
+        }
+    }
+    
+    // 大元素上浮
+    func swim(_ data: inout [Int], _ k: Int, _ N: Int) {
+        var k = k
+        while k > 1 && data[k/2] < data[k] {
+            // 大节点不断上浮
+            data.swapAt(k/2, k)
+            k = k / 2
+        }
+    }
+    
+    // 小元素下沉
+    func sink(_ data: inout [Int], _ k: Int, _ N: Int) {
+        var k = k
+        while 2*k <= N {
+            var j = 2 * k
+            if j < N && data[j] < data[j+1] {
+                // 左节点是较小的节点,选择右节点作为新的根结点
+                j += 1
+            }
+            // 如果当前 k 号节点小于其父节点，下沉
+            guard data[k] < data[j] else { break }
+            data.swapAt(k, j)
+            k = j
+        }
+    }
+}
+
+var number = [Int]()
+for _ in 0..<15 {
+    number.append(Int(arc4random_uniform(1000)))
+}
+
+//var sort = Sort()
 var array = ["a", "fuck", "baby", "gogogo"]
-var merge = Merge(number)
-sort.insertionSort(number, <)
-sort.selectionSort(number)
-sort.shellSort(number, <)
+//var merge = Merge(number)
+//sort.insertionSort(number, <)
+//sort.selectionSort(number)
+//sort.shellSort(number, <)
 //merge.mergeBU(number)
 //merge.mergeSort(array)
+
+var quick = Quick(number)
+//print(quick.data)
+
+//var heap = Heap<Int>(size: 100)
+//heap.data.append(0)
+//print(number)
+//for num in number {
+//    heap.insert(new: num)
+//}
+//print(heap.delMax())
+//
+//var heapsort = heapSort()
+//heapsort.sort(&number)
+//print(number)
 
